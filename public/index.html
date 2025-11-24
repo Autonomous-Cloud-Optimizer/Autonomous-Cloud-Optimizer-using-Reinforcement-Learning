@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Render Cloud Demo — Dashboard</title>
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Render Cloud Demo</h1>
+      <p class="sub">Simple cloud metrics & load simulator</p>
+    </div>
+    <div class="actions">
+      <label>Burn ms:
+        <input id="burnMs" type="number" value="800" min="50" step="50" />
+      </label>
+      <button id="burnBtn" class="btn">Trigger Burn</button>
+      <button id="burstBtn" class="btn alt">Burst (5x)</button>
+      <a class="btn link" href="/status" target="_blank">Raw /status</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="left">
+      <div class="card">
+        <h2>Live Metrics</h2>
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="label">Uptime</div>
+            <div id="uptime" class="value">- s</div>
+          </div>
+          <div class="metric">
+            <div class="label">CPU cores</div>
+            <div id="cpus" class="value">-</div>
+          </div>
+          <div class="metric">
+            <div class="label">RSS Mem</div>
+            <div id="rss" class="value">- MB</div>
+          </div>
+          <div class="metric">
+            <div class="label">Heap Used</div>
+            <div id="heap" class="value">- MB</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>CPU / Memory History</h2>
+        <canvas id="chart" height="160"></canvas>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="card">
+        <h2>Actions / Demo</h2>
+        <p>Use the buttons above to create CPU load that simulates traffic spikes.</p>
+        <ol>
+          <li>Set burn milliseconds (e.g. 800ms)</li>
+          <li>Click <strong>Trigger Burn</strong> to simulate workload</li>
+          <li>Open multiple tabs or use the "Burst" to simulate concurrency</li>
+        </ol>
+        <p class="hint">Tip: run `ab` or `hey` from another machine to create more realistic load.</p>
+      </div>
+
+      <div class="card small">
+        <h3>Recent Events</h3>
+        <ul id="events" class="events"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <small>Demo app — suitable for Render Web Service demo. Auto-refreshes metrics every 2s.</small>
+  </footer>
+
+<script>
+(() => {
+  const statusUrl = '/status';
+  const chartCtx = document.getElementById('chart').getContext('2d');
+  const eventsEl = document.getElementById('events');
+
+  // Simple in-browser arrays to store last N points
+  const maxPoints = 40;
+  const labels = [];
+  const rssData = [];
+  const heapData = [];
+
+  const chart = new Chart(chartCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'RSS (MB)', data: rssData, borderWidth: 2, tension: 0.3, fill: false },
+        { label: 'Heap Used (MB)', data: heapData, borderWidth: 2, tension: 0.3, fill: false }
+      ]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      scales: {
+        x: { ticks: { maxRotation: 0 } },
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  function addEvent(text) {
+    const li = document.createElement('li');
+    li.innerText = `${new Date().toLocaleTimeString()} — ${text}`;
+    eventsEl.prepend(li);
+    // keep last 10
+    while (eventsEl.children.length > 10) eventsEl.removeChild(eventsEl.lastChild);
+  }
+
+  async function fetchStatus() {
+    try {
+      const r = await fetch(statusUrl, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const s = await r.json();
+      // update numeric displays
+      document.getElementById('uptime').innerText = s.uptime_s + ' s';
+      document.getElementById('cpus').innerText = s.cpus;
+      document.getElementById('rss').innerText = s.memory_rss_mb + ' MB';
+      document.getElementById('heap').innerText = s.memory_heap_used_mb + ' MB';
+
+      // push to chart arrays
+      const label = new Date(s.timestamp).toLocaleTimeString();
+      labels.push(label);
+      rssData.push(s.memory_rss_mb);
+      heapData.push(s.memory_heap_used_mb);
+
+      if (labels.length > maxPoints) { labels.shift(); rssData.shift(); heapData.shift(); }
+
+      chart.update();
+    } catch (err) {
+      addEvent('Error fetching /status: ' + err.message);
+    }
+  }
+
+  // periodic polling
+  fetchStatus();
+  setInterval(fetchStatus, 2000);
+
+  // burn buttons
+  document.getElementById('burnBtn').addEventListener('click', async () => {
+    const ms = Math.max(0, parseInt(document.getElementById('burnMs').value) || 800);
+    addEvent('Triggering burn ' + ms + 'ms');
+    try {
+      const r = await fetch('/burn?ms=' + ms);
+      const j = await r.json();
+      addEvent('Burn finished ' + j.burned_ms + 'ms');
+      // immediate poll after burn to reflect load
+      setTimeout(fetchStatus, 250);
+    } catch (err) {
+      addEvent('Burn error: ' + err.message);
+    }
+  });
+
+  document.getElementById('burstBtn').addEventListener('click', () => {
+    const ms = Math.max(0, parseInt(document.getElementById('burnMs').value) || 800);
+    addEvent('Burst x5 with ' + ms + 'ms each');
+    // fire 5 parallel requests
+    for (let i = 0; i < 5; i++) {
+      fetch('/burn?ms=' + ms).then(r => r.json()).then(j => addEvent('Burst done ' + j.burned_ms + 'ms')).catch(e => addEvent('Burst error'));
+    }
+    setTimeout(fetchStatus, 500);
+  });
+})();
+</script>
+</body>
+</html>
