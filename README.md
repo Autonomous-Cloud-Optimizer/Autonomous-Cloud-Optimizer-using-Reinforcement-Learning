@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+
 # Demo-Site-for-Cloud-Optimizer
-=======
+
 # 🚀 Autonomous Cloud Optimizer Using Reinforcement Learning
 
 A self-learning Reinforcement Learning–based system that autonomously manages and optimizes cloud resources to reduce cost, maintain SLA, and improve performance.
