@@ -112,4 +112,4 @@ Energy-efficient optimization
 ## 🤝 Contributing
 
 Pull requests and issues are welcome!
->>>>>>> 8a2aa2b71949014bc9fdbf2fa28c59644952c0ae
+
