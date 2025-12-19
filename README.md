@@ -1,17 +1,15 @@
 
-# Demo-Site-for-Cloud-Optimizer
-
-# 🚀 Autonomous Cloud Optimizer Using Reinforcement Learning
+# Autonomous Cloud Optimizer Using Reinforcement Learning
 
 A self-learning Reinforcement Learning–based system that autonomously manages and optimizes cloud resources to reduce cost, maintain SLA, and improve performance.
 
-## 📘 Overview
+## About
 
 This project implements an AI-driven Autonomous Cloud Optimizer that uses Reinforcement Learning (RL) to make intelligent cloud scaling and resource allocation decisions. Unlike traditional threshold-based autoscalers, this system learns continuously from real-time cloud metrics and workload patterns.
 
 The agent observes CPU usage, memory usage, request rate, and latency, then decides whether to scale up, scale down, adjust resource limits, or keep the current configuration. A reward system guides the agent to minimize cost while maintaining service performance.
 
-## 🌟 Key Features
+## Features
 
 Reinforcement Learning–based autoscaling
 
@@ -35,6 +33,21 @@ Metrics Collector (Prometheus)
         ↑ Reward
 Reward Engine
 ```
+## System Requirements
+
+The project can run on any modern operating system, including Windows, Linux, or macOS. A minimum of 8 GB RAM and a dual-core processor (Intel i5 or equivalent) is recommended for smooth execution. At least 2 GB of free disk space is required for dependencies and logs. An active internet connection is necessary for dependency installation and optional cloud deployment.
+
+## Software Requirements
+
+Node.js (version 16 or above) must be installed to run the backend server and autoscaling logic. npm is required for dependency management. A modern web browser such as Google Chrome, Edge, or Firefox is needed to access the dashboard interface. Git must be installed to clone and manage the repository.
+
+For reinforcement learning extensions, Python 3.8 or higher is required along with common ML libraries such as NumPy and TensorFlow or PyTorch (optional). These are not mandatory for running the autoscaler simulation but are needed for advanced RL experimentation.
+
+## Libraries and Frameworks
+
+The backend uses Express.js for API handling and system monitoring. The frontend relies on HTML, CSS, JavaScript, and Chart.js for real-time visualization. Additional Node.js packages are listed in the package.json file and will be installed automatically using npm.
+
+
 ## 🧠 RL Components
 State (Input to the Agent):
 
