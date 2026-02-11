@@ -89,7 +89,8 @@ Docker
 CloudSim or Custom RL environments
 
 ## 📁 Project Structure
-/autonomous-cloud-optimizer
+```
+autonomous-cloud-optimizer/
 │
 ├── envs/               # RL training environments
 ├── agents/             # PPO, DQN, SAC agent implementations
@@ -100,6 +101,8 @@ CloudSim or Custom RL environments
 ├── train.py            # Train the RL agent
 ├── evaluate.py         # Evaluate trained agent
 └── README.md           # Documentation
+```
+
 
 ## 📈 Results
 
